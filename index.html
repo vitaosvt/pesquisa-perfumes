@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pesquisa de Perfumes Árabes - ML</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #f5f5f5; color: #333; }
+  .container { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
+  h1 { font-size: 22px; margin-bottom: 6px; color: #1a3a5c; }
+  .subtitle { font-size: 14px; color: #666; margin-bottom: 20px; }
+  .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+  .token-box { background: #fff8e6; border: 1px solid #f5c842; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+  .token-box h3 { font-size: 14px; color: #7a4f00; margin-bottom: 8px; }
+  .token-box p { font-size: 13px; color: #7a4f00; margin-bottom: 10px; line-height: 1.5; }
+  .token-box a { color: #185FA5; }
+  label { font-size: 13px; color: #555; display: block; margin-bottom: 5px; }
+  input, select { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; margin-bottom: 10px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .field { flex: 1; min-width: 150px; }
+  .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .tag { font-size: 13px; padding: 5px 14px; border-radius: 20px; border: 1px solid #ccc; cursor: pointer; background: white; color: #555; transition: all 0.15s; }
+  .tag.active { background: #1a3a5c; color: white; border-color: #1a3a5c; }
+  .btn { padding: 10px 28px; background: #1a3a5c; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; }
+  .btn:hover { background: #122840; }
+  .btn:disabled { background: #aaa; cursor: not-allowed; }
+  .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .metric { background: white; border-radius: 10px; padding: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); text-align: center; }
+  .metric .lbl { font-size: 12px; color: #888; margin-bottom: 4px; }
+  .metric .val { font-size: 24px; font-weight: bold; color: #1a3a5c; }
+  .product { background: white; border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: flex-start; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .product-title { font-size: 14px; font-weight: bold; margin-bottom: 6px; }
+  .product-meta { font-size: 13px; color: #666; display: flex; flex-wrap: wrap; gap: 8px; }
+  .badge { font-size: 12px; padding: 2px 10px; border-radius: 20px; font-weight: bold; }
+  .bg { background: #e6f4d7; color: #2d6a0a; }
+  .bm { background: #fff3cd; color: #7a4f00; }
+  .br { background: #fde8e8; color: #8b1a1a; }
+  .bb { background: #e6f0fb; color: #0c3a7a; }
+  .score { text-align: center; min-width: 60px; }
+  .score .num { font-size: 28px; font-weight: bold; }
+  .sh { color: #2d6a0a; }
+  .sm { color: #c87d00; }
+  .sl { color: #8b1a1a; }
+  .score .lbl { font-size: 11px; color: #999; }
+  .loading { text-align: center; padding: 30px; color: #888; font-size: 15px; }
+  .error { background: #fde8e8; border-radius: 10px; padding: 12px 16px; font-size: 13px; color: #8b1a1a; margin-bottom: 12px; }
+  .success { background: #e6f4d7; border-radius: 10px; padding: 10px 16px; font-size: 13px; color: #2d6a0a; margin-bottom: 12px; }
+  a.ver { font-size: 12px; color: #185FA5; display: inline-block; margin-top: 5px; }
+  .step { display: flex; gap: 8px; margin-bottom: 6px; font-size: 13px; color: #7a4f00; }
+  .sn { background: #f5c842; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; flex-shrink: 0; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🔍 Pesquisa de Oportunidades — Perfumes Árabes</h1>
+  <p class="subtitle">Encontre produtos com alta demanda e baixa concorrência no Mercado Livre</p>
+
+  <div class="token-box" id="tokenBox">
+    <h3>🔑 Configure seu Access Token</h3>
+    <p>Para usar o app, você precisa gerar um token de acesso gratuito. Siga os passos:</p>
+    <div class="step"><span class="sn">1</span><span>Abra esse link: <a href="https://auth.mercadolivre.com.br/authorization?response_type=token&client_id=375568755784962&redirect_uri=https://www.google.com.br" target="_blank">Gerar meu token</a></span></div>
+    <div class="step"><span class="sn">2</span><span>Faça login com sua conta do Mercado Livre</span></div>
+    <div class="step"><span class="sn">3</span><span>Você será redirecionado ao Google — copie o token da URL (após <b>access_token=</b>)</span></div>
+    <div class="step"><span class="sn">4</span><span>Cole o token abaixo e clique em Salvar</span></div>
+    <div class="row" style="margin-top:10px;">
+      <div class="field"><input type="text" id="tokenInput" placeholder="Cole seu access_token aqui" /></div>
+      <button class="btn" onclick="salvarToken()" style="padding:10px 16px;">Salvar</button>
+    </div>
+  </div>
+
+  <div id="appSection" style="display:none;">
+    <div class="success" id="statusMsg">✅ Token configurado! Escolha um termo e clique em Analisar.</div>
+    <div class="card">
+      <div class="tags" id="tags"></div>
+      <div class="row">
+        <div class="field">
+          <label>Termo personalizado</label>
+          <input type="text" id="termInput" placeholder="Ex: lattafa, bakhoor, perfume oud..." />
+        </div>
+        <div class="field" style="max-width:150px;">
+          <label>Resultados</label>
+          <select id="limitSelect">
+            <option value="20">20 produtos</option>
+            <option value="50" selected>50 produtos</option>
+          </select>
+        </div>
+        <div style="display:flex;align-items:flex-end;padding-bottom:10px;">
+          <button class="btn" id="btnBuscar" onclick="buscar()">🔍 Analisar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="metrics" id="metrics" style="display:none;">
+      <div class="metric"><div class="lbl">Produtos</div><div class="val" id="mTotal">0</div></div>
+      <div class="metric"><div class="lbl">Vendas totais</div><div class="val" id="mVendas">0</div></div>
+      <div class="metric"><div class="lbl">Preço médio</div><div class="val" id="mPreco">R$0</div></div>
+      <div class="metric"><div class="lbl">🏆 Oportunidades</div><div class="val" id="mOport">0</div></div>
+    </div>
+
+    <div id="errorMsg" class="error" style="display:none;"></div>
+    <div id="loadingMsg" class="loading" style="display:none;">⏳ Buscando no Mercado Livre...</div>
+    <div id="results"></div>
+  </div>
+</div>
+
+<script>
+const TERMOS = ["perfume árabe","perfume oud","perfume oriental","attar perfume","lattafa","bakhoor","perfume dubai","perfume musc"];
+let token = localStorage.getItem("ml_token") || "";
+
+if (token) mostrarApp();
+
+const tagsEl = document.getElementById("tags");
+TERMOS.forEach(t => {
+  const el = document.createElement("button");
+  el.className = "tag";
+  el.textContent = t;
+  el.onclick = () => {
+    document.querySelectorAll(".tag").forEach(x => x.classList.remove("active"));
+    el.classList.add("active");
+    document.getElementById("termInput").value = t;
+  };
+  tagsEl.appendChild(el);
+});
+
+function salvarToken() {
+  token = document.getElementById("tokenInput").value.trim();
+  if (!token) return alert("Cole o token antes de salvar!");
+  localStorage.setItem("ml_token", token);
+  mostrarApp();
+}
+
+function mostrarApp() {
+  document.getElementById("tokenBox").style.display = "none";
+  document.getElementById("appSection").style.display = "block";
+}
+
+function calcScore(vendas, total) {
+  const demanda = Math.min(vendas / 30, 10);
+  const conc = Math.max(0, 10 - Math.log10(total + 1) * 3);
+  return Math.min(10, Math.round((demanda * 0.65 + conc * 0.35) * 10) / 10);
+}
+
+async function buscar() {
+  const termo = document.getElementById("termInput").value.trim() || "perfume árabe";
+  const limit = document.getElementById("limitSelect").value;
+  const btn = document.getElementById("btnBuscar");
+  const loading = document.getElementById("loadingMsg");
+  const errorMsg = document.getElementById("errorMsg");
+
+  btn.disabled = true;
+  loading.style.display = "block";
+  errorMsg.style.display = "none";
+  document.getElementById("results").innerHTML = "";
+  document.getElementById("metrics").style.display = "none";
+
+  try {
+    const url = `https://api.mercadolibre.com/sites/MLB/search?q=${encodeURIComponent(termo)}&limit=${limit}&sort=sold_quantity_desc`;
+    const resp = await fetch(url, { headers: { "Authorization": "Bearer " + token } });
+    if (resp.status === 401) {
+      localStorage.removeItem("ml_token");
+      throw new Error("Token expirado! Recarregue a página e gere um novo token.");
+    }
+    if (!resp.ok) throw new Error("Erro " + resp.status);
+    const data = await resp.json();
+    const items = data.results || [];
+    if (!items.length) throw new Error("Nenhum resultado para: " + termo);
+
+    const total = data.paging?.total || 0;
+    const lista = items.map(i => ({
+      titulo: i.title,
+      preco: i.price || 0,
+      vendas: i.sold_quantity || 0,
+      score: calcScore(i.sold_quantity || 0, total),
+      link: i.permalink,
+      novo: i.condition === "new",
+      frete: i.shipping?.free_shipping,
+      vendedor: i.seller?.nickname || ""
+    })).sort((a,b) => b.score - a.score);
+
+    const tv = lista.reduce((s,i) => s+i.vendas, 0);
+    const pm = Math.round(lista.reduce((s,i) => s+i.preco, 0) / lista.length);
+    const op = lista.filter(i => i.score >= 7).length;
+
+    document.getElementById("mTotal").textContent = lista.length;
+    document.getElementById("mVendas").textContent = tv.toLocaleString("pt-BR");
+    document.getElementById("mPreco").textContent = "R$" + pm.toLocaleString("pt-BR");
+    document.getElementById("mOport").textContent = op;
+    document.getElementById("metrics").style.display = "grid";
+
+    const container = document.getElementById("results");
+    const info = document.createElement("p");
+    info.style = "font-size:13px;color:#888;margin-bottom:12px;";
+    info.textContent = `${lista.length} produtos | ${total.toLocaleString("pt-BR")} anúncios totais para "${termo}"`;
+    container.appendChild(info);
+
+    lista.forEach(item => {
+      const sc = item.score;
+      const scClass = sc >= 7 ? "sh" : sc >= 4 ? "sm" : "sl";
+      const badge = sc >= 7 ? ["bg","🟢 Alta oportunidade"] : sc >= 4 ? ["bm","🟡 Média"] : ["br","🔴 Baixa"];
+      const div = document.createElement("div");
+      div.className = "product";
+      div.innerHTML = `
+        <div style="flex:1">
+          <div class="product-title">${item.titulo}</div>
+          <div class="product-meta">
+            <span>💰 R$ ${item.preco.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
+            <span>🛒 ${item.vendas} vendidos</span>
+            <span>👥 ${total.toLocaleString("pt-BR")} concorrentes</span>
+            ${item.frete ? '<span class="badge bg">Frete grátis</span>' : ""}
+            <span class="badge bb">${item.novo ? "Novo" : "Usado"}</span>
+            <span class="badge ${badge[0]}">${badge[1]}</span>
+          </div>
+          ${item.vendedor ? `<div style="font-size:12px;color:#999;margin-top:4px;">Vendedor: ${item.vendedor}</div>` : ""}
+          <a class="ver" href="${item.link}" target="_blank">🔗 Ver no Mercado Livre</a>
+        </div>
+        <div class="score">
+          <div class="num ${scClass}">${sc.toFixed(1)}</div>
+          <div class="lbl">score</div>
+        </div>
+      `;
+      container.appendChild(div);
+    });
+
+  } catch(e) {
+    errorMsg.textContent = "⚠ " + e.message;
+    errorMsg.style.display = "block";
+  } finally {
+    btn.disabled = false;
+    loading.style.display = "none";
+  }
+}
+</script>
+</body>
+</html>
